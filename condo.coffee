@@ -1,8 +1,21 @@
+# make calculations match ing
+# add municipal taxes
+# rent3sell7
+# 
+
 
 inflation = 0.03
+investmentInterest = 0.03
 
 condoPrice = 310000
 downPayment = 60000
+
+salePrice = 280000
+
+rentalPrice = 1200 #monthly
+yearlyInput = 17000
+
+taxes = 2000
 
 payment = 14500
 interest = 0.0345
@@ -58,23 +71,25 @@ scenarios =
             @addAccount "principal", true
             @addAccount "interest"
             @addAccount "buyer"
+            @addAccount "govt"
         scenario: ->
             if @year == 0
-                @transfer "outside", "condo", 60000
-                @transfer "principal", "condo", 250000
+                @transfer "outside", "condo", downPayment
+                @transfer "principal", "condo", condoPrice-downPayment
 
-            if @year > 0
-                @transfer "outside", "cash", 15000
-                interestPayment = 0 - (interest * @accounts.principal)
-                principalPayment = payment - interestPayment
-                @transfer "cash", "principal", principalPayment, false
-                @transfer "cash", "interest", interestPayment
+        
+            @transfer "outside", "cash", yearlyInput
+            interestPayment = 0 - (interest * @accounts.principal)
+            principalPayment = payment - interestPayment
+            @transfer "cash", "principal", principalPayment, false
+            @transfer "cash", "interest", interestPayment
+            @transfer "cash", "govt", taxes
 
             if @year == 10
-                @transfer "buyer", "cash", 280000
+                @transfer "buyer", "cash", salePrice
                 @transfer "cash", "principal", 0-@accounts.principal, false
 
-            @appreciate "cash", 0.03
+            @appreciate "cash", investmentInterest
 
     rentFor10:
         init: ->
@@ -82,10 +97,10 @@ scenarios =
             @addAccount "landlord"
         scenario: ->
             if @year == 0
-                @transfer "outside", "cash", 60000
-            @transfer "outside", "cash", 15000
-            @transfer "cash", "landlord", 12*1200
-            @appreciate "cash", 0.03
+                @transfer "outside", "cash", downPayment
+            @transfer "outside", "cash", yearlyInput
+            @transfer "cash", "landlord", 12*rentalPrice*1.02^(@year+1)
+            @appreciate "cash", investmentInterest
 
 s = require("http").createServer (req, res) ->
     scenarioName = req.url.replace("/","")
